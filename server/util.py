@@ -2,117 +2,87 @@ import pickle
 import json
 import numpy as np
 import warnings
+import os  # Yeh naya import hai file paths ke liye
 
-# Suppress UserWarning to keep the output clean during prediction.
+# UserWarning ko ignore karein taaki output saaf rahe
 warnings.filterwarnings("ignore", category=UserWarning)
 
-# --- Global variables to hold the loaded model and data columns ---
+# --- Global variables ---
 __locations = None
 __data_columns = None
 __model = None
 
 
 def get_estimated_price(location, sqft, bhk, bath):
-    """
-    Estimates the price of a home based on its location, size, and number of rooms.
-
-    Args:
-        location (str): The location of the property.
-        sqft (float): The total square footage of the property.
-        bhk (int): The number of bedrooms (BHK).
-        bath (int): The number of bathrooms.
-
-    Returns:
-        float: The estimated price in Lakhs, rounded to 2 decimal places.
-    """
+    """Ghar ki keemat ka anumaan lagata hai."""
     try:
-        # Find the index of the location column. Case-insensitive search.
+        # Location column ka index dhoondein (case-insensitive)
         loc_index = __data_columns.index(location.lower())
     except ValueError:
-        # If the location is not in our columns, it's treated as an unknown category.
+        # Agar location nahi milti, toh use unknown category maana jaata hai
         loc_index = -1
 
-    # Create a feature vector of zeros with the correct length.
-    # This vector must match the input shape expected by the model.
+    # Model ke liye sahi length ka feature vector banayein
     x = np.zeros(len(__data_columns))
-
-    # Set the values for sqft, bath, and bhk at the correct indices.
     x[0] = sqft
     x[1] = bath
     x[2] = bhk
 
-    # If the location was found, set its corresponding column to 1 (one-hot encoding).
+    # Agar location mili hai, toh uske column ko 1 set karein (one-hot encoding)
     if loc_index >= 0:
         x[loc_index] = 1
 
-    # Use the loaded model to predict the price and return the result.
-    # The result is rounded to two decimal places for readability.
+    # Load kiye gaye model se keemat predict karein
     return round(__model.predict([x])[0], 2)
+
+
+def get_location_names():
+    """Model mein istemal ki gayi sabhi locations ki list return karta hai."""
+    return __locations
 
 
 def load_saved_artifacts():
     """
-    Loads the trained model and data columns from saved files (pickle and JSON).
-    This function populates the global variables for use by other functions.
+    Trained model aur data columns ko files se load karta hai.
+    Yeh function server start hone par ek baar chalta hai.
     """
     print("Loading saved artifacts...start")
     global __data_columns
     global __locations
     global __model
 
-    # Load the data column information from the JSON file.
-    with open("./artifacts/columns.json", "r") as f:
-        __data_columns = json.load(f)["data_columns"]
-        # The first 3 columns are 'sqft', 'bath', 'bhk'. The rest are locations.
-        __locations = __data_columns[3:]
+    try:
+        # Is script (util.py) ke directory ka absolute path pata karein
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        
+        # Artifacts ka absolute path banayein
+        columns_path = os.path.join(script_dir, "artifacts", "columns.json")
+        model_path = os.path.join(script_dir, "artifacts", "banglore_home_prices_model.pickle")
 
-    # Load the trained machine learning model from the pickle file.
-    # Check if the model is already loaded to avoid redundant file I/O.
-    if __model is None:
-        with open("./artifacts/banglore_home_prices_model.pickle", "rb") as f:
-            __model = pickle.load(f)
+        # Absolute path ka istemal karke JSON file load karein
+        with open(columns_path, "r") as f:
+            data = json.load(f)
+            __data_columns = data["data_columns"]
+            __locations = __data_columns[3:]  # Pehle 3 columns features hain
 
-    print("Loading saved artifacts...done")
+        # Absolute path ka istemal karke model file load karein
+        if __model is None:
+            with open(model_path, "rb") as f:
+                __model = pickle.load(f)
+        
+        print("Loading saved artifacts...done")
 
-
-def get_location_names():
-    """
-    Returns a list of all location names that the model was trained on.
-
-    Returns:
-        list: A list of location strings.
-    """
-    return __locations
-
-
-def get_data_columns():
-    """
-    Returns the list of all data columns, including features and locations.
-
-    Returns:
-        list: A list of all column name strings.
-    """
-    return __data_columns
+    except FileNotFoundError as e:
+        print(f"Error loading artifacts: File not found. Make sure 'artifacts' folder is in the 'server' directory.")
+        print(e)
+    except Exception as e:
+        print(f"An unexpected error occurred while loading artifacts: {e}")
 
 
-# --- Main execution block ---
+# --- Test Cases ---
 if __name__ == "__main__":
-    # Load artifacts when the script is run directly.
     load_saved_artifacts()
-
-    # --- Test Cases ---
-    print("\nAvailable locations:")
-    # print(get_location_names()) # Uncomment to see all locations
-
-    print("\n--- Price Estimations ---")
-    # Test with a valid, known location
-    print(f"Price for 1000 sqft, 3 BHK, 3 Bath in '1st Phase JP Nagar': ", get_estimated_price("1st Phase JP Nagar", 1000, 3, 3))
-
-    # Test with another valid, known location
-    print(f"Price for 1000 sqft, 2 BHK, 2 Bath in '1st Phase JP Nagar': ", get_estimated_price("1st Phase JP Nagar", 1000, 2, 2))
-
-    # Test with a location that is not in the dataset (will have a lower accuracy)
-    print(f"Price for 1000 sqft, 2 BHK, 2 Bath in 'Kalhalli' (unknown): ", get_estimated_price("Kalhalli", 1000, 2, 2))
-
-    # Test with another location that is not in the dataset
-    print(f"Price for 1000 sqft, 2 BHK, 2 Bath in 'Ejipura' (known): ", get_estimated_price("Ejipura", 1000, 2, 2))
+    if __locations:
+        print("\n--- Price Estimations ---")
+        print(f"Price for '1st Phase JP Nagar', 1000 sqft, 3 BHK, 3 Bath: ", get_estimated_price("1st Phase JP Nagar", 1000, 3, 3))
+        print(f"Price for 'Ejipura', 1000 sqft, 2 BHK, 2 Bath: ", get_estimated_price("Ejipura", 1000, 2, 2))
