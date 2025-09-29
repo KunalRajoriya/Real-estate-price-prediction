@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, render_template  # render_template ko add kiya gaya hai
+from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
 from . import util
 
@@ -14,12 +14,11 @@ util.load_saved_artifacts()
 @app.route('/')
 def home():
     """Homepage ke liye endpoint."""
-    # Option 1: Ek simple sa message dikhayein
-    return "Welcome to the Housing Price Prediction System!"
+    # Option 1: Ek simple sa message dikhayein (ab comment kar diya gaya hai)
+    # return "Welcome to the Housing Price Prediction System!"
 
-    # Option 2: Ek HTML page (jaise index.html) dikhayein
-    # Iske liye 'templates' folder mein 'index.html' file honi chahiye
-    # return render_template('index.html')
+    # Option 2: Ek HTML page (jaise app.html) dikhayein
+    return render_template('app.html')
 
 
 @app.route('/get_location_names', methods=['GET'])
