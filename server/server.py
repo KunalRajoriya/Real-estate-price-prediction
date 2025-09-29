@@ -1,15 +1,25 @@
-from flask import Flask, request, jsonify
-from flask_cors import CORS  # CORS ke liye naya import
+from flask import Flask, request, jsonify, render_template  # render_template ko add kiya gaya hai
+from flask_cors import CORS
 from . import util
 
 # Flask app ko initialize karein
 app = Flask(__name__)
-# Poori app ke liye CORS ko enable karein (Cross-Origin Resource Sharing)
 CORS(app)
 
 # Model aur doosri zaroori cheezein server start hote hi load karein
-# Yeh line 'if __name__ == "__main__"' block se bahar honi chahiye taaki Render par chale
 util.load_saved_artifacts()
+
+
+# Yeh naya route homepage ke liye hai
+@app.route('/')
+def home():
+    """Homepage ke liye endpoint."""
+    # Option 1: Ek simple sa message dikhayein
+    return "Welcome to the Housing Price Prediction System!"
+
+    # Option 2: Ek HTML page (jaise index.html) dikhayein
+    # Iske liye 'templates' folder mein 'index.html' file honi chahiye
+    # return render_template('index.html')
 
 
 @app.route('/get_location_names', methods=['GET'])
@@ -28,26 +38,19 @@ def get_location_names():
 def predict_home_price():
     """Input data ke aadhar par ghar ki keemat predict karne ke liye endpoint."""
     try:
-        # POST request ke form se data lein
         total_sqft = float(request.form['total_sqft'])
         location = request.form['location']
         bhk = int(request.form['bhk'])
         bath = int(request.form['bath'])
 
-        # Util module se function ka istemal karke keemat predict karein
         estimated_price = util.get_estimated_price(location, total_sqft, bhk, bath)
-
-        # Anumaanit keemat ko JSON response mein return karein
         response = jsonify({'estimated_price': estimated_price})
 
     except KeyError:
-        # Jab form mein data missing ho, uss case ko handle karein
         response = jsonify({'error': 'Form mein data aadhura hai. Kripya total_sqft, location, bhk, aur bath pradaan karein.'})
     except ValueError:
-        # Jab sqft, bhk, ya bath sahi number na ho, uss case ko handle karein
         response = jsonify({'error': 'Kripya total_sqft, bhk, aur bath ke liye sahi number daalein.'})
     except Exception as e:
-        # Doosre potential errors ko handle karein
         response = jsonify({'error': str(e)})
 
     return response
@@ -61,5 +64,4 @@ def page_not_found(e):
 
 if __name__ == "__main__":
     print("Starting Python Flask Server For Home Price Prediction...")
-    # 'app.run' sirf local development ke liye istemal hota hai
     app.run(debug=True)
