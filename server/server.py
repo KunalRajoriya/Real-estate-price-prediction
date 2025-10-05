@@ -1,6 +1,6 @@
 from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
-from . import util
+import util
 
 # Flask app ko initialize karein
 app = Flask(__name__)
@@ -18,6 +18,8 @@ def home():
     # return "Welcome to the Housing Price Prediction System!"
 
     # Option 2: Ek HTML page (jaise app.html) dikhayein
+    # Make sure your 'app.html' is inside a 'templates' folder
+    # in the same directory as this server.py file.
     return render_template('app.html')
 
 
