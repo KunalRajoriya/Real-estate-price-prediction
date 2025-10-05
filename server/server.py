@@ -1,6 +1,6 @@
 from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
-from . import util
+import util
 
 # Flask app ko initialize karein
 app = Flask(__name__)
