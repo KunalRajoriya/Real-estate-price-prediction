@@ -1,6 +1,6 @@
 from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
-import util
+from server import util
 import os
 
 base_dir = os.path.dirname(os.path.abspath(__file__))
