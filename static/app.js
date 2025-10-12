@@ -1,19 +1,17 @@
 function getBathValue() {
-    var uiBathrooms = document.getElementsByName("uiBathrooms");
-    for (var i in uiBathrooms) {
-        if (uiBathrooms[i].checked) {
-            return parseInt(i) + 1;
-        }
+    // A more reliable way to get the value from the selected radio button
+    var selectedBathroom = document.querySelector('input[name="uiBathrooms"]:checked');
+    if (selectedBathroom) {
+        return parseInt(selectedBathroom.value);
     }
     return -1; // Invalid Value
 }
 
 function getBHKValue() {
-    var uiBHK = document.getElementsByName("uiBHK");
-    for (var i in uiBHK) {
-        if (uiBHK[i].checked) {
-            return parseInt(i) + 1;
-        }
+    // A more reliable way to get the value from the selected radio button
+    var selectedBHK = document.querySelector('input[name="uiBHK"]:checked');
+    if (selectedBHK) {
+        return parseInt(selectedBHK.value);
     }
     return -1; // Invalid Value
 }
@@ -27,9 +25,9 @@ function onClickedEstimatePrice() {
     var location = document.getElementById("uiLocations");
     var estPrice = document.getElementById("uiEstimatedPrice");
 
-    var url = "http://127.0.0.1:5000/predict_home_price"; // Update to match your server endpoint
+    // CORRECTED: Using a relative URL so it works on Render and your local machine
+    var url = "/predict_home_price"; 
 
-    // Log inputs to ensure they are captured correctly
     console.log("Input values:", {
         total_sqft: parseFloat(sqft.value),
         bhk: bhk,
@@ -58,16 +56,18 @@ function onClickedEstimatePrice() {
 
 function onPageLoad() {
     console.log("document loaded");
-    var url = "http://127.0.0.1:5000/get_location_names"; // Update to match your API setup
+    
+    // CORRECTED: Using a relative URL here as well
+    var url = "/get_location_names"; 
+
     $.get(url, function (data, status) {
         console.log("Got response for get_location_names request");
         if (data && data.locations) {
             var locations = data.locations;
             var uiLocations = document.getElementById("uiLocations");
-            $('#uiLocations').empty(); // Clear existing options
-            $('#uiLocations').append(new Option("Choose a Location", "", true, true)); // Default option
+            $('#uiLocations').empty(); 
+            $('#uiLocations').append(new Option("Choose a Location", "", true, true)); 
 
-            // Add locations to the dropdown
             for (var i = 0; i < locations.length; i++) {
                 $('#uiLocations').append(new Option(locations[i], locations[i]));
             }
